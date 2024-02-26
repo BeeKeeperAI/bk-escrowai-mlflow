@@ -1,0 +1,95 @@
+trigger:
+  branches:
+    include:
+    - dev
+  paths:
+    exclude:
+    - README.md
+    - "*pipeline.yaml"
+    - "*pipeline.yml"
+
+pool:
+  name: devops-vmss
+
+# parameters:
+#   - name: acr_name
+#     type: string
+#     displayName: Local Private ACR Name
+#   - name: acr_rg_name
+#     type: string
+#     displayName: Local Private ACR RG
+#   - name: mlflow_repo
+#     type: string
+#     displayName: Local Public DNS Zone Name
+
+variables:
+  - name: subscription_id
+    ${{ if eq( variables['Build.SourceBranchName'], 'testing') }}:
+      value: "1078bfee-371b-429d-936e-1edcde8f8b0b"
+    ${{ if eq( variables['Build.SourceBranchName'], 'staging') }}:
+      value: "d6e4a9f5-d3aa-467c-b56d-357011070739"
+    ${{ if eq( variables['Build.SourceBranchName'], 'master') }}:
+      value: "3b8d1270-4c3b-4616-9d16-8b230fa46ef0"
+    ${{ if eq( variables['Build.SourceBranchName'], 'dev') }}:
+      value: "a5feb091-aa97-4db5-9940-8e7c5f3bacb3"
+  - name: servicename
+    ${{ if eq( variables['Build.SourceBranchName'], 'testing') }}:
+      value: "sp-terraform-tst"
+    ${{ if eq( variables['Build.SourceBranchName'], 'staging') }}:
+      value: "sp-terraform-stg"
+    ${{ if eq( variables['Build.SourceBranchName'], 'master') }}:
+      value: "sp-terraform-prd"
+    ${{ if eq( variables['Build.SourceBranchName'], 'dev') }}:
+      value: "sp-terraform-dev"
+  - name: acr_name
+    ${{ if eq( variables['Build.SourceBranchName'], 'testing') }}:
+      value: "crusetstaksprivate"
+    ${{ if eq( variables['Build.SourceBranchName'], 'staging') }}:
+      value: "crusestgaksprivate"
+    ${{ if eq( variables['Build.SourceBranchName'], 'master') }}:
+      value: "cruseprdaksprivate"
+    ${{ if eq( variables['Build.SourceBranchName'], 'dev') }}:
+      value: "crusetstaksprivate"
+  # - name: acr_rg_name
+  #   ${{ if eq( variables['Build.SourceBranchName'], 'testing') }}:
+  #     value: "rg-use-tst-aksacr"
+  #   ${{ if eq( variables['Build.SourceBranchName'], 'staging') }}:
+  #     value: "rg-use-stg-aksacr"
+  #   ${{ if eq( variables['Build.SourceBranchName'], 'master') }}:
+  #     value: "rg-use-prd-aksacr"
+  #   ${{ if eq( variables['Build.SourceBranchName'], 'dev') }}:
+  #     value: "rg-use-dev-aksacr"
+  # - name: mlflow_repo
+  #   ${{ if eq( variables['Build.SourceBranchName'], 'testing') }}:
+  #     value: "sp-terraform-tst"
+  #   ${{ if eq( variables['Build.SourceBranchName'], 'staging') }}:
+  #     value: "sp-terraform-stg"
+  #   ${{ if eq( variables['Build.SourceBranchName'], 'master') }}:
+  #     value: "sp-terraform-prd"
+  #   ${{ if eq( variables['Build.SourceBranchName'], 'dev') }}:
+  #     value: "sp-terraform-dev"
+stages:
+- stage: MLflow_image_Creation
+  displayName: "MLFlow Image Creation"
+  jobs:
+  - job: MLflow_image_Creation
+    displayName: "Mlflow image creation"
+    continueOnError: false
+    steps:
+    - task: AzureCLI@2
+      displayName: "Creating MLflow image and push to reg"
+      inputs:
+        azureSubscription: '${{variables.servicename}}'
+        scriptType: 'bash'
+        scriptLocation: 'inlineScript'
+        inlineScript: |
+          
+          az acr login --name $(acr_name)
+          mlflow_version=$(grep 'VERSION = ' ./mlflow/version.py | awk -F'"' '{print $2}')
+          echo $mlflow_version
+          mlflowtag=$(acr_name).azurecr.io/mlflow-custom:v$mlflow_version
+          echo $mlflowtag
+          docker build --tag $mlflowtag .
+          docker push $mlflowtag
+
+

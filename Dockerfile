@@ -1,26 +1,36 @@
-FROM python:3.8-bullseye
+# Stage 1: Build JavaScript files
+FROM node:16 AS js-builder
+WORKDIR /app
+COPY mlflow/server/js /app
+RUN yarn install && yarn build
 
-WORKDIR /home/mlflow
+# Stage 2: Build and setup everything in one stage
+FROM python:3.8-slim-bullseye AS wheel-builder
+WORKDIR /mlflow
 
-RUN curl -sL https://deb.nodesource.com/setup_16.x | bash - \
-    && apt-get install -y --no-install-recommends nodejs \
-    # java
-    openjdk-11-jre-headless \
-    # yarn
-    && npm install --global yarn \
-    # protoc
-    && wget https://github.com/protocolbuffers/protobuf/releases/download/v3.19.4/protoc-3.19.4-linux-x86_64.zip -O /tmp/protoc.zip \
-    && mkdir -p /home/mlflow/.local \
-    && unzip /tmp/protoc.zip -d /home/mlflow/.local/protoc \
-    && rm /tmp/protoc.zip \
-    && chmod -R +x /home/mlflow/.local/protoc \
-    # adding an unprivileged user
-    && groupadd --gid 10001 mlflow  \
-    && useradd --uid 10001 --gid mlflow --shell /bin/bash --create-home mlflow
+# Copy the MLflow project files into the Docker container
+COPY . /mlflow
 
-ENV PATH="/home/mlflow/.local/protoc/bin:$PATH"
+# Copy built JavaScript files from js-builder
+COPY --from=js-builder /app/build /mlflow/mlflow/server/js/build
 
-# the "mlflow" user created above, represented numerically for optimal compatibility with Kubernetes security policies
-USER 10001
+# Build the Python wheel for MLflow
+RUN python setup.py bdist_wheel
 
+RUN python -m venv /opt/venv
+
+ENV PATH="/opt/venv/bin:$PATH"
+
+# Install the Python wheel with extras
+RUN for whl in /mlflow/dist/*.whl; do pip install "$whl[extras]"; done && rm -rf /mlflow/dist
+
+FROM python:3.8-slim-bullseye
+
+WORKDIR /mlflow
+
+COPY --from=wheel-builder /opt/venv /opt/venv
+
+ENV PATH="/opt/venv/bin:$PATH"
+
+# Set the default command
 CMD ["bash"]
