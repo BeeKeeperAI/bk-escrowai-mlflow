@@ -49,7 +49,7 @@ variables:
     ${{ if eq( variables['Build.SourceBranchName'], 'master') }}:
       value: "cruseprdaksprivate"
     ${{ if eq( variables['Build.SourceBranchName'], 'dev') }}:
-      value: "crusetstaksprivate"
+      value: "crusedevaksprivate"
   # - name: acr_rg_name
   #   ${{ if eq( variables['Build.SourceBranchName'], 'testing') }}:
   #     value: "rg-use-tst-aksacr"
