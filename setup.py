@@ -163,6 +163,13 @@ setup(
             # Required for exporting metrics from the MLflow server to Prometheus
             # as part of the MLflow server monitoring add-on
             "prometheus-flask-exporter",
+            "azure-storage-blob>=12.11.0, <13.0.0",
+            "SQLAlchemy>=1.4.35, <2.0.0",
+            "boto3>=1.26.66, <2.0.0",
+            "psycopg2-binary>=2.9.3, <3.0.0",
+            "protobuf<5.0.0",
+            "PyMySQL>=1.0.2, <2.0.0",
+            "cryptography==38.0.4",
         ],
         "databricks": [
             # Required to write model artifacts to unity catalog locations
