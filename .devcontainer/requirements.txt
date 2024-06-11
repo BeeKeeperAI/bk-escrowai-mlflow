@@ -41,7 +41,7 @@ azure-core==1.29.5
     #   azure-identity
     #   azure-storage-blob
     #   azure-storage-file-datalake
-azure-identity==1.14.1
+azure-identity==1.16.1
     # via -r test-requirements.txt
 azure-storage-blob==12.18.3
     # via
