@@ -724,7 +724,7 @@ typing-extensions==4.8.0
     #   uvicorn
 tzdata==2023.3
     # via pandas
-urllib3==1.26.18
+urllib3==1.26.19
     # via
     #   botocore
     #   databricks-cli
