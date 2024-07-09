@@ -760,7 +760,7 @@ xxhash==3.4.1
     #   evaluate
 yarl==1.9.2
     # via aiohttp
-zipp==3.17.0
+zipp==3.19.1
     # via
     #   importlib-metadata
     #   importlib-resources
