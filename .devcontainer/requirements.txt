@@ -9,7 +9,7 @@ absl-py==2.0.0
     # via rouge-score
 aiofiles==23.2.1
     # via mlserver
-aiohttp==3.8.6
+aiohttp==3.10.2
     # via
     #   datasets
     #   fsspec
